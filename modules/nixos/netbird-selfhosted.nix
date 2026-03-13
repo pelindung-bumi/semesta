@@ -72,7 +72,6 @@ in
       enable = true;
       recommendedGzipSettings = true;
       recommendedOptimisation = true;
-      recommendedProxySettings = true;
       recommendedTlsSettings = true;
       virtualHosts.${cfg.domain} = {
         enableACME = true;
@@ -80,27 +79,21 @@ in
         http2 = true;
         locations."/" = {
           proxyPass = "http://127.0.0.1:8080";
-          proxyWebsockets = true;
-          extraConfig = ''
-            proxy_set_header Host $host;
-            proxy_set_header X-Forwarded-Proto $scheme;
-          '';
         };
 
         locations."~ ^/(relay|ws-proxy/)" = {
           proxyPass = "http://127.0.0.1:8081";
-          proxyWebsockets = true;
           extraConfig = ''
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
             proxy_set_header Host $host;
-            proxy_set_header X-Forwarded-Proto $scheme;
             proxy_read_timeout 1d;
           '';
         };
 
         locations."~ ^/(signalexchange\\.SignalExchange|management\\.ManagementService|management\\.ProxyService)/".extraConfig = ''
-          grpc_set_header Host $host;
           grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          grpc_set_header X-Forwarded-Proto $scheme;
           grpc_pass grpc://127.0.0.1:8081;
           grpc_read_timeout 1d;
           grpc_send_timeout 1d;
@@ -111,13 +104,18 @@ in
           proxyPass = "http://127.0.0.1:8081";
           extraConfig = ''
             proxy_set_header Host $host;
-            proxy_set_header X-Forwarded-Proto $scheme;
           '';
         };
 
         extraConfig = ''
           client_header_timeout 1d;
           client_body_timeout 1d;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Scheme $scheme;
+          proxy_set_header X-Forwarded-Proto https;
+          proxy_set_header X-Forwarded-Host $host;
+          grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         '';
       };
     };
