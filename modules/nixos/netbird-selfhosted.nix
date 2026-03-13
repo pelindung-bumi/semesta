@@ -98,6 +98,8 @@ in
       };
     };
 
+    services.logrotate.settings.nginx.su = "root root";
+
     systemd.services.netbird-server-secrets = {
       description = "Generate persistent secrets for self-hosted NetBird";
       wantedBy = [ "multi-user.target" ];
