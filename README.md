@@ -300,6 +300,13 @@ If a peer can ping `vpn.netbird.selfhosted` but cannot reach `10.200.x.x`:
 client -> lb01:6443 -> kube01:6443
 ```
 
+`kube01` includes API certificate SANs for:
+
+- `10.200.3.212`
+- `10.200.1.93`
+- `103.125.102.156`
+- `kubeapi.pelindungbumi.dev`
+
 If kube API is unreachable through `lb01`, check:
 
 - `lb01` can reach `10.200.3.212:6443`
