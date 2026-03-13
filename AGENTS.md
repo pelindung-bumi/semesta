@@ -25,18 +25,35 @@ This repository manages infrastructure declaratively with Nix.
 ## Host Conventions
 
 - The first server host is `vpn`.
+- The current planned general-purpose hosts also include `lb01` and `kube01`.
 - Use `#<host>` for flake targets.
 - Use a non-default SSH port for managed hosts unless the user asks otherwise.
 - Keep host-specific services such as custom OpenSSH policy inside the host directory when they are not shared by all machines.
 - Preserve headless/cloud access during changes: key-based SSH, serial console, and conservative networking defaults.
 - For `vpn`, the managed SSH port is `22222` unless the user changes it.
+- For `lb01` and `kube01`, keep SSH on port `22` unless the user changes it.
 - Prefer simple built-in NixOS services first; only add custom wrappers/modules when the upstream module is clearly insufficient.
+
+## Load Balancer Rules
+
+- `lb01` is the simple load balancer host.
+- Keep `lb01` minimal; for now it should only proxy Kubernetes API TCP traffic.
+- Use NixOS `nginx` with `streamConfig` for the kube API proxy unless the user asks otherwise.
+
+## Kubernetes Rules
+
+- `kube01` is the current single-node Kubernetes host.
+- Use built-in `services.k3s` for `kube01` unless the user asks for a different distro.
+- Keep `kube01` intentionally minimal: server role, worker on the same node, disable Traefik unless requested otherwise.
+- Do not over-customize CNI early; keep the first install simple so later migration from flannel to Cilium stays easy.
+- On `kube01`, leave the extra disk for future Ceph/Rook use untouched unless the user explicitly asks to manage it.
 
 ## Service Rules
 
 - Keep shared service logic in `modules/nixos`.
 - Keep host-specific service wiring in `hosts/<name>`.
 - Prefer readable, upstream-aligned configuration over overabstracted custom modules.
+- Prefer plain NixOS options directly over custom wrapper options when the upstream interface is already clear.
 - When a service has both a control plane and an agent/peer role, model them as separate concerns.
 
 ## NetBird Rules

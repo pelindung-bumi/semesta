@@ -4,7 +4,13 @@ Declarative infrastructure managed with Nix.
 
 This repository is meant to manage multiple machines and services over time.
 
-Today it contains one active host, `vpn`, and currently uses:
+Today it contains these host roles:
+
+- `vpn` for self-hosted NetBird
+- `lb01` for a simple Kubernetes API load balancer
+- `kube01` for a minimal single-node k3s cluster
+
+It currently uses:
 
 - `nixos-anywhere` for first install
 - `colmena` for day-2 deploys
@@ -19,9 +25,22 @@ semesta/
 ├── AGENTS.md
 ├── modules/
 │   └── nixos/
+│       ├── cloud-host.nix
 │       ├── common.nix
-│       └── netbird-selfhosted.nix
+│       ├── managed-ssh.nix
+│       ├── netbird-selfhosted.nix
+│       └── ...
 └── hosts/
+    ├── lb01/
+    │   ├── configuration.nix
+    │   ├── disko.nix
+    │   ├── hardware-configuration.nix
+    │   └── nginx-lb.nix
+    ├── kube01/
+    │   ├── configuration.nix
+    │   ├── disko.nix
+    │   ├── hardware-configuration.nix
+    │   └── k3s.nix
     └── vpn/
         ├── configuration.nix
         ├── disko.nix
@@ -74,6 +93,7 @@ Engineer machine
 - `hardware-configuration.nix` should stay focused on detected hardware details
 - stable `nixpkgs` is the default unless explicitly changed
 - avoid Home Manager unless explicitly requested
+- prefer plain upstream NixOS options over custom wrapper options
 
 ## Current Host Example
 
@@ -82,6 +102,14 @@ Engineer machine
 - Managed SSH alias: `semesta-vpn`
 - Managed SSH port: `22222`
 - NetBird domain: `netbird.pelindungbumi.dev`
+
+Current planned hosts:
+
+```text
+vpn    -> NetBird control plane + peer/router
+lb01   -> nginx TCP proxy for kube API
+kube01 -> single-node k3s server
+```
 
 ## SSH Aliases
 
@@ -263,6 +291,28 @@ If a peer can ping `vpn.netbird.selfhosted` but cannot reach `10.200.x.x`:
 - verify masquerade is enabled
 - verify the client has access to the route
 - verify the target device on the private subnet actually allows the traffic
+
+### Service Example: kube API through `lb01`
+
+`lb01` is intentionally simple. It only proxies Kubernetes API TCP traffic:
+
+```text
+client -> lb01:6443 -> kube01:6443
+```
+
+If kube API is unreachable through `lb01`, check:
+
+- `lb01` can reach `10.200.3.212:6443`
+- `services.nginx` is active on `lb01`
+- `services.k3s` is active on `kube01`
+- firewall allows `6443/tcp` on both hosts
+
+### Service Example: `kube01` storage layout
+
+`kube01` intentionally leaves the extra disk raw for future Rook/Ceph use:
+
+- `vda` = operating system disk managed by `disko`
+- `vdb` = untouched raw disk reserved for future Ceph
 
 ## Adding Another Host
 

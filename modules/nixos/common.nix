@@ -26,11 +26,11 @@ in
     curl
     git
     htop
+    jq
     vim
   ];
 
   networking.firewall.enable = true;
-  networking.networkmanager.enable = true;
 
   nix.settings = {
     auto-optimise-store = true;
@@ -48,6 +48,7 @@ in
 
   security.sudo.wheelNeedsPassword = false;
   users.mutableUsers = false;
+  system.stateVersion = "25.11";
 
   users.users.root = {
     hashedPassword = "!";
@@ -64,6 +65,4 @@ in
     hashedPassword = "!";
     openssh.authorizedKeys.keys = authorizedKeys;
   };
-
-  services.qemuGuest.enable = true;
 }

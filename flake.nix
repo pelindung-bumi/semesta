@@ -38,6 +38,34 @@
         };
 
       hosts = {
+        lb01 = {
+          system = "x86_64-linux";
+          modules = [
+            disko.nixosModules.disko
+            ./hosts/lb01/configuration.nix
+          ];
+          deployment = {
+            targetHost = "10.200.1.93";
+            targetPort = 22;
+            targetUser = "root";
+            tags = [ "lb01" "loadbalancer" ];
+          };
+        };
+
+        kube01 = {
+          system = "x86_64-linux";
+          modules = [
+            disko.nixosModules.disko
+            ./hosts/kube01/configuration.nix
+          ];
+          deployment = {
+            targetHost = "10.200.3.212";
+            targetPort = 22;
+            targetUser = "root";
+            tags = [ "kube01" "k3s" ];
+          };
+        };
+
         vpn = {
           system = "x86_64-linux";
           modules = [
