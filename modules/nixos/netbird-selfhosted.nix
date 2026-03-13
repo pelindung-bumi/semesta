@@ -259,7 +259,7 @@ EOF
         port = 51820;
         interface = "wt0";
         hardened = true;
-        autoStart = false;
+        autoStart = true;
         environment = {
           NB_ADMIN_URL = publicUrl;
           NB_MANAGEMENT_URL = publicUrl;
