@@ -45,7 +45,7 @@
             ./hosts/vpn/configuration.nix
           ];
           deployment = {
-            targetHost = "103.125.103.148";
+            targetHost = "semesta-vpn";
             targetPort = 22222;
             targetUser = "root";
             tags = [ "vpn" ];
