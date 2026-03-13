@@ -111,6 +111,14 @@ lb01   -> nginx TCP proxy for kube API
 kube01 -> single-node k3s server
 ```
 
+Current host endpoints:
+
+```text
+vpn    -> private: 10.200.2.108   public: 103.125.103.148   ssh: 22222
+lb01   -> private: 10.200.1.93    public: 103.125.102.156   ssh: 22
+kube01 -> private: 10.200.0.177   public: 103.125.103.90    ssh: 22
+```
+
 ## SSH Aliases
 
 Managed hosts are easiest to use with SSH aliases. Example:
@@ -120,6 +128,20 @@ Host semesta-vpn
   HostName 103.125.103.148
   User root
   Port 22222
+  IdentityFile ~/.ssh/your-key
+  IdentitiesOnly yes
+
+Host semesta-lb01
+  HostName 10.200.1.93
+  User root
+  Port 22
+  IdentityFile ~/.ssh/your-key
+  IdentitiesOnly yes
+
+Host semesta-kube01
+  HostName 10.200.0.177
+  User root
+  Port 22
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
 ```
@@ -147,6 +169,26 @@ Notes:
 - `hardware-configuration.nix` is generated during first install.
 - `disko.nix` owns filesystem layout.
 - after install, use the managed SSH settings defined for that host.
+
+Current install examples:
+
+```bash
+nix run nixpkgs#nixos-anywhere -- \
+  --copy-host-keys \
+  --generate-hardware-config nixos-generate-config ./hosts/lb01/hardware-configuration.nix \
+  --flake .#lb01 \
+  --target-host root@10.200.1.93 \
+  -p 22
+```
+
+```bash
+nix run nixpkgs#nixos-anywhere -- \
+  --copy-host-keys \
+  --generate-hardware-config nixos-generate-config ./hosts/kube01/hardware-configuration.nix \
+  --flake .#kube01 \
+  --target-host root@10.200.0.177 \
+  -p 22
+```
 
 ## Day-2 Deployment
 
@@ -302,14 +344,21 @@ client -> lb01:6443 -> kube01:6443
 
 `kube01` includes API certificate SANs for:
 
-- `10.200.3.212`
+- `10.200.0.177`
 - `10.200.1.93`
 - `103.125.102.156`
 - `kubeapi.pelindungbumi.dev`
 
+That means kube clients can safely use any of these API endpoints after install:
+
+- `https://10.200.0.177:6443`
+- `https://10.200.1.93:6443`
+- `https://103.125.102.156:6443`
+- `https://kubeapi.pelindungbumi.dev:6443`
+
 If kube API is unreachable through `lb01`, check:
 
-- `lb01` can reach `10.200.3.212:6443`
+- `lb01` can reach `10.200.0.177:6443`
 - `services.nginx` is active on `lb01`
 - `services.k3s` is active on `kube01`
 - firewall allows `6443/tcp` on both hosts

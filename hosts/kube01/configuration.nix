@@ -15,7 +15,7 @@
   boot.loader.grub = {
     enable = true;
     configurationLimit = 10;
-    device = "/dev/disk/by-id/virtio-2a457a0e-9dc1-4972-b";
+    device = "/dev/disk/by-id/virtio-f3decaab-8f0e-4181-8";
     efiInstallAsRemovable = true;
     efiSupport = true;
   };

@@ -10,7 +10,7 @@
       "servicelb"
     ];
     extraFlags = toString [
-      "--tls-san=10.200.3.212"
+      "--tls-san=10.200.0.177"
       "--tls-san=10.200.1.93"
       "--tls-san=103.125.102.156"
       "--tls-san=kubeapi.pelindungbumi.dev"

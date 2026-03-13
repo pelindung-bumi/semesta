@@ -59,7 +59,7 @@
             ./hosts/kube01/configuration.nix
           ];
           deployment = {
-            targetHost = "10.200.3.212";
+            targetHost = "10.200.0.177";
             targetPort = 22;
             targetUser = "root";
             tags = [ "kube01" "k3s" ];

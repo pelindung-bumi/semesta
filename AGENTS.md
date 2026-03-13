@@ -32,6 +32,7 @@ This repository manages infrastructure declaratively with Nix.
 - Preserve headless/cloud access during changes: key-based SSH, serial console, and conservative networking defaults.
 - For `vpn`, the managed SSH port is `22222` unless the user changes it.
 - For `lb01` and `kube01`, keep SSH on port `22` unless the user changes it.
+- For `kube01`, include Kubernetes API TLS SANs for the direct node IP, the load balancer private IP, the load balancer public IP, and the chosen kube API DNS name.
 - Prefer simple built-in NixOS services first; only add custom wrappers/modules when the upstream module is clearly insufficient.
 
 ## Load Balancer Rules
@@ -39,6 +40,7 @@ This repository manages infrastructure declaratively with Nix.
 - `lb01` is the simple load balancer host.
 - Keep `lb01` minimal; for now it should only proxy Kubernetes API TCP traffic.
 - Use NixOS `nginx` with `streamConfig` for the kube API proxy unless the user asks otherwise.
+- The current kube API proxy target is `10.200.0.177:6443`.
 
 ## Kubernetes Rules
 
@@ -80,6 +82,7 @@ This repository manages infrastructure declaratively with Nix.
 - Prefer `colmena apply --build-on-target --on <host>` for day-2 changes from a compatible local environment.
 - If `colmena` fails because of local/macOS/daemon-specific issues, use a server-side fallback: `nixos-rebuild switch --flake .#<host>` from a checkout on the target host.
 - When using SSH aliases for managed hosts, keep the alias in `deployment.targetHost` and document the matching `~/.ssh/config` expectation in `README.md`.
+- For bootstrap/install, use direct `root@<ip>` targets unless the user explicitly wants aliases there too.
 - Keep generated files and secrets out of git unless the user explicitly asks otherwise.
 - Document current operational commands in `README.md` whenever a new host or service is added.
 
