@@ -9,6 +9,7 @@
   networking.hostName = "vpn";
 
   boot.loader.efi.canTouchEfiVariables = false;
+  boot.loader.efi.efiSysMountPoint = "/boot/efi";
   boot.loader.grub = {
     enable = true;
     device = "/dev/vda";
