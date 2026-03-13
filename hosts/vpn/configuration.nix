@@ -3,6 +3,7 @@
   imports = [
     ../../modules/nixos/common.nix
     ./disko.nix
+    ./netbird.nix
     ./openssh-vpn.nix
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
