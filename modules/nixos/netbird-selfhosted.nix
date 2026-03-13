@@ -4,7 +4,8 @@ let
 
   cfg = config.semesta.services.netbirdSelfhosted;
 
-  baseUrl = "http://${cfg.domain}";
+  publicUrl = "https://${cfg.domain}";
+  exposedAddress = "${publicUrl}:443";
   stateDir = "/var/lib/netbird-server";
   dataDir = "${stateDir}/data";
   renderedDir = "${stateDir}/rendered";
@@ -19,6 +20,13 @@ in
       type = types.str;
       example = "netbird.example.com";
       description = "Public domain used by the NetBird control plane.";
+    };
+
+    acmeEmail = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      example = "admin@example.com";
+      description = "Email used for ACME registration and expiry notices.";
     };
 
     serverImage = mkOption {
@@ -53,18 +61,30 @@ in
       openssl
     ];
 
-    networking.firewall.allowedTCPPorts = [ 80 ];
+    networking.firewall.allowedTCPPorts = [ 80 443 ];
     networking.firewall.allowedUDPPorts = [ 3478 ];
+
+    security.acme.acceptTerms = true;
+    security.acme.defaults.email =
+      if cfg.acmeEmail != null then cfg.acmeEmail else "admin@${cfg.domain}";
 
     services.nginx = {
       enable = true;
       recommendedGzipSettings = true;
       recommendedOptimisation = true;
       recommendedProxySettings = true;
+      recommendedTlsSettings = true;
       virtualHosts.${cfg.domain} = {
+        enableACME = true;
+        forceSSL = true;
+        http2 = true;
         locations."/" = {
           proxyPass = "http://127.0.0.1:8080";
           proxyWebsockets = true;
+          extraConfig = ''
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          '';
         };
 
         locations."~ ^/(relay|ws-proxy/)" = {
@@ -72,12 +92,15 @@ in
           proxyWebsockets = true;
           extraConfig = ''
             proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
             proxy_read_timeout 1d;
           '';
         };
 
         locations."~ ^/(signalexchange\\.SignalExchange|management\\.ManagementService|management\\.ProxyService)/".extraConfig = ''
+          grpc_set_header Host $host;
           grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          grpc_set_header X-Forwarded-Proto $scheme;
           grpc_pass grpc://127.0.0.1:8081;
           grpc_read_timeout 1d;
           grpc_send_timeout 1d;
@@ -88,6 +111,7 @@ in
           proxyPass = "http://127.0.0.1:8081";
           extraConfig = ''
             proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
           '';
         };
 
@@ -149,7 +173,7 @@ in
         cat > "${serverConfigPath}" <<EOF
 server:
   listenAddress: ":80"
-  exposedAddress: "${baseUrl}:80"
+  exposedAddress: "${exposedAddress}"
   stunPorts:
     - 3478
   metricsPort: 9090
@@ -159,11 +183,11 @@ server:
   authSecret: "$auth_secret"
   dataDir: "/var/lib/netbird"
   auth:
-    issuer: "${baseUrl}/oauth2"
+    issuer: "${publicUrl}/oauth2"
     signKeyRefreshEnabled: true
     dashboardRedirectURIs:
-      - "${baseUrl}/nb-auth"
-      - "${baseUrl}/nb-silent-auth"
+      - "${publicUrl}/nb-auth"
+      - "${publicUrl}/nb-silent-auth"
     cliRedirectURIs:
       - "http://localhost:53000/"
   store:
@@ -199,12 +223,12 @@ EOF
         image = cfg.dashboardImage;
         ports = [ "127.0.0.1:8080:80" ];
         environment = {
-          NETBIRD_MGMT_API_ENDPOINT = baseUrl;
-          NETBIRD_MGMT_GRPC_API_ENDPOINT = baseUrl;
+          NETBIRD_MGMT_API_ENDPOINT = publicUrl;
+          NETBIRD_MGMT_GRPC_API_ENDPOINT = publicUrl;
           AUTH_AUDIENCE = "netbird-dashboard";
           AUTH_CLIENT_ID = "netbird-dashboard";
           AUTH_CLIENT_SECRET = "";
-          AUTH_AUTHORITY = "${baseUrl}/oauth2";
+          AUTH_AUTHORITY = "${publicUrl}/oauth2";
           USE_AUTH0 = "false";
           AUTH_SUPPORTED_SCOPES = "openid profile email groups";
           AUTH_REDIRECT_URI = "/nb-auth";
@@ -239,8 +263,8 @@ EOF
         hardened = true;
         autoStart = false;
         environment = {
-          NB_ADMIN_URL = baseUrl;
-          NB_MANAGEMENT_URL = baseUrl;
+          NB_ADMIN_URL = publicUrl;
+          NB_MANAGEMENT_URL = publicUrl;
         };
         login.enable = cfg.localPeer.setupKeyFile != null;
         login.setupKeyFile = cfg.localPeer.setupKeyFile;
