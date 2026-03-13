@@ -381,6 +381,18 @@ Use this checklist:
 5. add any reusable logic to `modules/nixos`
 6. document any SSH alias or service-specific operational notes here
 
+## TODO
+
+- configure a remote builder so `colmena` can run reliably from the engineer machine
+  - recommended builder candidate: `kube01`
+  - preferred path: use the private network address for builder traffic
+  - target outcome: `colmena apply --on <host>` works from the local machine without relying on host-local `nixos-rebuild`
+- add final SSH aliases for all managed hosts in local `~/.ssh/config`
+- optionally update `flake.nix` deployment targets to use SSH aliases for `lb01` and `kube01`
+- document the final kubeconfig distribution workflow for `kubeapi.pelindungbumi.dev:6443`
+- evaluate future migration from flannel to Cilium on `kube01`
+- reserve future Ceph/Rook plan for the extra raw disk on a future storage-capable Kubernetes host
+
 ## Design Rules
 
 - stable `nixpkgs` only unless explicitly requested otherwise
