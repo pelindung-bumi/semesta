@@ -256,6 +256,7 @@ EOF
     services.netbird = mkIf cfg.localPeer.enable {
       useRoutingFeatures = "both";
       clients.default = {
+        name = "netbird";
         port = 51820;
         interface = "wt0";
         hardened = true;
