@@ -254,20 +254,8 @@ EOF
     };
 
     services.netbird = mkIf cfg.localPeer.enable {
+      enable = true;
       useRoutingFeatures = "both";
-      clients.default = {
-        name = "netbird";
-        port = 51820;
-        interface = "wt0";
-        hardened = true;
-        autoStart = true;
-        environment = {
-          NB_ADMIN_URL = publicUrl;
-          NB_MANAGEMENT_URL = publicUrl;
-        };
-        login.enable = cfg.localPeer.setupKeyFile != null;
-        login.setupKeyFile = cfg.localPeer.setupKeyFile;
-      };
     };
   };
 }
