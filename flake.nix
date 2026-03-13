@@ -85,23 +85,25 @@
         }
       ) hosts;
 
-      colmenaHive = colmena.lib.makeHive (
+      colmena = {
+        meta = {
+          nixpkgs = import nixpkgs {
+            system = "x86_64-linux";
+            config.allowUnfree = true;
+          };
+        };
+      }
+      // lib.mapAttrs (
+        _name: host:
         {
-          meta = {
-            nixpkgs = import nixpkgs {
-              system = "x86_64-linux";
-              config.allowUnfree = true;
-            };
+          imports = host.modules;
+          deployment = host.deployment // {
+            allowLocalDeployment = true;
           };
         }
-        // lib.mapAttrs (
-          _name: host:
-          {
-            imports = host.modules;
-            deployment = host.deployment;
-          }
-        ) hosts
-      );
+      ) hosts;
+
+      colmenaHive = colmena.lib.makeHive self.outputs.colmena;
 
     };
 }
