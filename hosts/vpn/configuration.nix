@@ -1,0 +1,22 @@
+{ lib, ... }:
+{
+  imports = [
+    ../../modules/nixos/common.nix
+    ../../modules/nixos/cloud-host.nix
+    ./disko.nix
+    ./netbird.nix
+    ./openssh-vpn.nix
+  ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
+
+  networking.hostName = "vpn";
+
+  boot.loader.efi.canTouchEfiVariables = false;
+  boot.loader.efi.efiSysMountPoint = "/boot/efi";
+  boot.loader.grub = {
+    enable = true;
+    configurationLimit = 10;
+    device = "/dev/vda";
+    efiInstallAsRemovable = true;
+    efiSupport = true;
+  };
+}
