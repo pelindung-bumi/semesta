@@ -1,1 +1,1 @@
-ssh-ng://root@10.200.1.93 x86_64-linux - 2 2 big-parallel
+ssh-ng://batman@semesta-lb01 x86_64-linux - 2 2 big-parallel

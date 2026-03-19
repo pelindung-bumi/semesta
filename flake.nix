@@ -47,7 +47,8 @@
           deployment = {
             targetHost = "semesta-lb01";
             targetPort = 22;
-            targetUser = "root";
+            targetUser = "batman";
+            privilegeEscalationCommand = [ "sudo" "-H" "--" ];
             tags = [ "lb01" "loadbalancer" ];
           };
         };
@@ -61,7 +62,8 @@
           deployment = {
             targetHost = "semesta-kube01";
             targetPort = 22;
-            targetUser = "root";
+            targetUser = "batman";
+            privilegeEscalationCommand = [ "sudo" "-H" "--" ];
             tags = [ "kube01" "k3s" ];
           };
         };
@@ -75,7 +77,8 @@
           deployment = {
             targetHost = "semesta-vpn";
             targetPort = 22222;
-            targetUser = "root";
+            targetUser = "batman";
+            privilegeEscalationCommand = [ "sudo" "-H" "--" ];
             tags = [ "vpn" ];
           };
         };

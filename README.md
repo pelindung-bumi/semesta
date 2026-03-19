@@ -126,21 +126,21 @@ Managed hosts are easiest to use with SSH aliases. Current example matching this
 ```sshconfig
 Host semesta-vpn
   HostName 103.125.103.148
-  User root
+  User batman
   Port 22222
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
 
 Host semesta-lb01
   HostName 10.200.1.93
-  User root
+  User batman
   Port 22
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
 
 Host semesta-kube01
   HostName 10.200.0.177
-  User root
+  User batman
   Port 22
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
@@ -154,15 +154,17 @@ When new hosts are added, use the same pattern with a distinct alias per host.
 
 ## Remote Builder
 
-This repo now includes a Colmena machines file at `colmena/machines` that points builds to `lb01` over the private address `10.200.1.93`.
+This repo now includes a Colmena machines file at `colmena/machines` that points builds to `lb01` through the `batman` user and the `semesta-lb01` SSH alias.
 
 Current builder entry:
 
 ```text
-ssh-ng://root@10.200.1.93 x86_64-linux - 2 2 big-parallel
+ssh-ng://batman@semesta-lb01 x86_64-linux - 2 2 big-parallel
 ```
 
 `colmena` uses that file through `meta.machinesFile` in `flake.nix`, so the normal day-2 deployment path becomes:
+
+Day-2 deployments also log in as `batman` and escalate with `sudo`, instead of SSHing as `root` directly.
 
 ```bash
 nix run github:zhaofengli/colmena -- apply --on <host>
@@ -170,7 +172,7 @@ nix run github:zhaofengli/colmena -- apply --on <host>
 
 ### Local Machine Requirements
 
-Your local machine still needs working SSH access to `root@10.200.1.93`. With the SSH aliases above, a quick validation is:
+Your local machine still needs working SSH access to `batman@semesta-lb01`. With the SSH aliases above, a quick validation is:
 
 ```bash
 ssh semesta-lb01
@@ -189,7 +191,7 @@ Optional dedicated builder alias example:
 ```sshconfig
 Host semesta-builder
   HostName 10.200.1.93
-  User root
+  User batman
   Port 22
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
@@ -207,7 +209,7 @@ Then test direct remote build delegation from the local machine by asking `lb01`
 
 ```bash
 nix build .#nixosConfigurations.lb01.config.system.build.toplevel \
-  --builders 'ssh-ng://root@10.200.1.93 x86_64-linux - 2 2 big-parallel' \
+  --builders 'ssh-ng://batman@semesta-lb01 x86_64-linux - 2 2 big-parallel' \
   --max-jobs 0
 ```
 
@@ -215,7 +217,7 @@ For a stronger end-to-end check against a non-builder target:
 
 ```bash
 nix build .#nixosConfigurations.kube01.config.system.build.toplevel \
-  --builders 'ssh-ng://root@10.200.1.93 x86_64-linux - 2 2 big-parallel' \
+  --builders 'ssh-ng://batman@semesta-lb01 x86_64-linux - 2 2 big-parallel' \
   --max-jobs 0
 ```
 
