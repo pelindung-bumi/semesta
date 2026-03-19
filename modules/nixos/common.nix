@@ -44,6 +44,10 @@ in
       "nix-command"
       "flakes"
     ];
+    trusted-users = [
+      "root"
+      "batman"
+    ];
   };
 
   nix.gc = {
