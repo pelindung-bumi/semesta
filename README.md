@@ -10,6 +10,12 @@ Today it contains these host roles:
 - `lb01` for a simple Kubernetes API load balancer
 - `kube01` for a minimal single-node k3s cluster
 
+Pinned service versions in the current setup:
+
+- NetBird server image: `0.66.4`
+- NetBird dashboard image: `v2.34.2`
+- K3s binary: `v1.35.1+k3s1`
+
 It currently uses:
 
 - `nixos-anywhere` for first install

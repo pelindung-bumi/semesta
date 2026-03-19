@@ -1,9 +1,13 @@
-{ ... }:
+{ pkgs, ... }:
+let
+  pinnedK3s = pkgs.callPackage ../../pkgs/k3s.nix { };
+in
 {
   networking.firewall.allowedTCPPorts = [ 6443 ];
 
   services.k3s = {
     enable = true;
+    package = pinnedK3s;
     role = "server";
     disable = [
       "traefik"
