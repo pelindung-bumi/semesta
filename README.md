@@ -154,12 +154,12 @@ When new hosts are added, use the same pattern with a distinct alias per host.
 
 ## Remote Builder
 
-This repo now includes a Colmena machines file at `colmena/machines` that points builds to `kube01` over the private address `10.200.0.177`.
+This repo now includes a Colmena machines file at `colmena/machines` that points builds to `lb01` over the private address `10.200.1.93`.
 
 Current builder entry:
 
 ```text
-ssh-ng://root@10.200.0.177 x86_64-linux - 2 2 big-parallel
+ssh-ng://root@10.200.1.93 x86_64-linux - 2 2 big-parallel
 ```
 
 `colmena` uses that file through `meta.machinesFile` in `flake.nix`, so the normal day-2 deployment path becomes:
@@ -170,10 +170,10 @@ nix run github:zhaofengli/colmena -- apply --on <host>
 
 ### Local Machine Requirements
 
-Your local machine still needs working SSH access to `root@10.200.0.177`. With the SSH aliases above, a quick validation is:
+Your local machine still needs working SSH access to `root@10.200.1.93`. With the SSH aliases above, a quick validation is:
 
 ```bash
-ssh semesta-kube01
+ssh semesta-lb01
 ```
 
 If you use a multi-user Nix install, make sure your local user is trusted by the Nix daemon. Example:
@@ -188,7 +188,7 @@ Optional dedicated builder alias example:
 
 ```sshconfig
 Host semesta-builder
-  HostName 10.200.0.177
+  HostName 10.200.1.93
   User root
   Port 22
   IdentityFile ~/.ssh/your-key
@@ -200,14 +200,22 @@ Host semesta-builder
 First, make sure the builder host config evaluates locally:
 
 ```bash
-nix build .#nixosConfigurations.kube01.config.system.build.toplevel
+nix build .#nixosConfigurations.lb01.config.system.build.toplevel
 ```
 
-Then test direct remote build delegation from the local machine:
+Then test direct remote build delegation from the local machine by asking `lb01` to build another host closure:
 
 ```bash
 nix build .#nixosConfigurations.lb01.config.system.build.toplevel \
-  --builders 'ssh-ng://root@10.200.0.177 x86_64-linux - 2 2 big-parallel' \
+  --builders 'ssh-ng://root@10.200.1.93 x86_64-linux - 2 2 big-parallel' \
+  --max-jobs 0
+```
+
+For a stronger end-to-end check against a non-builder target:
+
+```bash
+nix build .#nixosConfigurations.kube01.config.system.build.toplevel \
+  --builders 'ssh-ng://root@10.200.1.93 x86_64-linux - 2 2 big-parallel' \
   --max-jobs 0
 ```
 

@@ -4,7 +4,6 @@
     ../../modules/nixos/common.nix
     ../../modules/nixos/cloud-host.nix
     ../../modules/nixos/managed-ssh.nix
-    ../../modules/nixos/remote-builder.nix
     ./disko.nix
     ./k3s.nix
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
