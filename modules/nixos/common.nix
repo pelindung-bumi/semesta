@@ -26,7 +26,13 @@ in
     curl
     git
     htop
+    inetutils
+    iperf3
     jq
+    mtr
+    nmap
+    tcpdump
+    traceroute
     vim
   ];
 
@@ -37,6 +43,10 @@ in
     experimental-features = [
       "nix-command"
       "flakes"
+    ];
+    trusted-users = [
+      "root"
+      "batman"
     ];
   };
 

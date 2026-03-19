@@ -121,34 +121,107 @@ kube01 -> private: 10.200.0.177   public: 103.125.103.90    ssh: 22
 
 ## SSH Aliases
 
-Managed hosts are easiest to use with SSH aliases. Example:
+Managed hosts are easiest to use with SSH aliases. Current example matching this repo:
 
 ```sshconfig
 Host semesta-vpn
   HostName 103.125.103.148
-  User root
+  User batman
   Port 22222
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
 
 Host semesta-lb01
   HostName 10.200.1.93
-  User root
+  User batman
   Port 22
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
 
 Host semesta-kube01
   HostName 10.200.0.177
-  User root
+  User batman
   Port 22
   IdentityFile ~/.ssh/your-key
   IdentitiesOnly yes
 ```
 
+This repo's `flake.nix` uses `semesta-lb01`, `semesta-kube01`, and `semesta-vpn` as `deployment.targetHost` values, so these aliases need to exist in your local `~/.ssh/config`.
+
 Replace `~/.ssh/your-key` with the real private key path you use for the server.
 
 When new hosts are added, use the same pattern with a distinct alias per host.
+
+## Remote Builder
+
+This repo now includes a Colmena machines file at `colmena/machines` that points builds to `lb01` through the `batman` user and the `semesta-lb01` SSH alias.
+
+Current builder entry:
+
+```text
+ssh-ng://batman@semesta-lb01 x86_64-linux - 2 2 big-parallel
+```
+
+`colmena` uses that file through `meta.machinesFile` in `flake.nix`, so the normal day-2 deployment path becomes:
+
+Day-2 deployments also log in as `batman` and escalate with `sudo`, instead of SSHing as `root` directly.
+
+```bash
+nix run github:zhaofengli/colmena -- apply --on <host>
+```
+
+### Local Machine Requirements
+
+Your local machine still needs working SSH access to `batman@semesta-lb01`. With the SSH aliases above, a quick validation is:
+
+```bash
+ssh semesta-lb01
+```
+
+If you use a multi-user Nix install, make sure your local user is trusted by the Nix daemon. Example:
+
+```text
+trusted-users = root <your-local-username>
+```
+
+Add that to your local `/etc/nix/nix.conf` if needed, then restart the local Nix daemon using the method for your platform.
+
+Optional dedicated builder alias example:
+
+```sshconfig
+Host semesta-builder
+  HostName 10.200.1.93
+  User batman
+  Port 22
+  IdentityFile ~/.ssh/your-key
+  IdentitiesOnly yes
+```
+
+### Remote Builder Validation
+
+First, make sure the builder host config evaluates locally:
+
+```bash
+nix build .#nixosConfigurations.lb01.config.system.build.toplevel
+```
+
+Then test direct remote build delegation from the local machine by asking `lb01` to build another host closure:
+
+```bash
+nix build .#nixosConfigurations.lb01.config.system.build.toplevel \
+  --builders 'ssh-ng://batman@semesta-lb01 x86_64-linux - 2 2 big-parallel' \
+  --max-jobs 0
+```
+
+For a stronger end-to-end check against a non-builder target:
+
+```bash
+nix build .#nixosConfigurations.kube01.config.system.build.toplevel \
+  --builders 'ssh-ng://batman@semesta-lb01 x86_64-linux - 2 2 big-parallel' \
+  --max-jobs 0
+```
+
+`--max-jobs 0` forces the build off the local machine so it is easier to confirm the builder path is working.
 
 ## First Install
 
@@ -195,10 +268,16 @@ nix run nixpkgs#nixos-anywhere -- \
 Preferred:
 
 ```bash
+nix run github:zhaofengli/colmena -- apply --on <host>
+```
+
+Fallback when the local machine cannot use the remote builder cleanly:
+
+```bash
 nix run github:zhaofengli/colmena -- apply --build-on-target --on <host>
 ```
 
-Fallback when the local machine has Nix/daemon/architecture issues:
+Fallback when the local machine has Nix/daemon/architecture issues beyond that:
 
 ```bash
 rsync -az --delete ./ <user>@<ssh-alias>:<checkout-dir>/
@@ -216,6 +295,12 @@ nix build .#nixosConfigurations.<host>.config.system.build.toplevel
 ```
 
 Deploy a host with Colmena:
+
+```bash
+nix run github:zhaofengli/colmena -- apply --on <host>
+```
+
+Deploy a host with the old build-on-target path:
 
 ```bash
 nix run github:zhaofengli/colmena -- apply --build-on-target --on <host>
@@ -383,10 +468,6 @@ Use this checklist:
 
 ## TODO
 
-- configure a remote builder so `colmena` can run reliably from the engineer machine
-  - recommended builder candidate: `kube01`
-  - preferred path: use the private network address for builder traffic
-  - target outcome: `colmena apply --on <host>` works from the local machine without relying on host-local `nixos-rebuild`
 - add final SSH aliases for all managed hosts in local `~/.ssh/config`
 - optionally update `flake.nix` deployment targets to use SSH aliases for `lb01` and `kube01`
 - document the final kubeconfig distribution workflow for `kubeapi.pelindungbumi.dev:6443`
