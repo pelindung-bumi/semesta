@@ -119,6 +119,7 @@
             system = "x86_64-linux";
             config.allowUnfree = true;
           };
+          machinesFile = ./colmena/machines;
         };
       }
       // lib.mapAttrs (
