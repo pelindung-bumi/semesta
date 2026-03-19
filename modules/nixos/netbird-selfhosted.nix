@@ -31,13 +31,13 @@ in
 
     serverImage = mkOption {
       type = types.str;
-      default = "docker.io/netbirdio/netbird-server:latest";
+      default = "docker.io/netbirdio/netbird-server:0.66.4";
       description = "OCI image for the combined NetBird server.";
     };
 
     dashboardImage = mkOption {
       type = types.str;
-      default = "docker.io/netbirdio/dashboard:latest";
+      default = "docker.io/netbirdio/dashboard:v2.34.2";
       description = "OCI image for the NetBird dashboard.";
     };
 
