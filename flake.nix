@@ -45,7 +45,7 @@
             ./hosts/lb01/configuration.nix
           ];
           deployment = {
-            targetHost = "10.200.1.93";
+            targetHost = "semesta-lb01";
             targetPort = 22;
             targetUser = "root";
             tags = [ "lb01" "loadbalancer" ];
@@ -59,7 +59,7 @@
             ./hosts/kube01/configuration.nix
           ];
           deployment = {
-            targetHost = "10.200.0.177";
+            targetHost = "semesta-kube01";
             targetPort = 22;
             targetUser = "root";
             tags = [ "kube01" "k3s" ];

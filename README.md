@@ -121,7 +121,7 @@ kube01 -> private: 10.200.0.177   public: 103.125.103.90    ssh: 22
 
 ## SSH Aliases
 
-Managed hosts are easiest to use with SSH aliases. Example:
+Managed hosts are easiest to use with SSH aliases. Current example matching this repo:
 
 ```sshconfig
 Host semesta-vpn
@@ -146,6 +146,8 @@ Host semesta-kube01
   IdentitiesOnly yes
 ```
 
+This repo's `flake.nix` uses `semesta-lb01`, `semesta-kube01`, and `semesta-vpn` as `deployment.targetHost` values, so these aliases need to exist in your local `~/.ssh/config`.
+
 Replace `~/.ssh/your-key` with the real private key path you use for the server.
 
 When new hosts are added, use the same pattern with a distinct alias per host.
@@ -168,7 +170,11 @@ nix run github:zhaofengli/colmena -- apply --on <host>
 
 ### Local Machine Requirements
 
-Your local machine still needs working SSH access to `root@10.200.0.177`.
+Your local machine still needs working SSH access to `root@10.200.0.177`. With the SSH aliases above, a quick validation is:
+
+```bash
+ssh semesta-kube01
+```
 
 If you use a multi-user Nix install, make sure your local user is trusted by the Nix daemon. Example:
 
@@ -178,7 +184,7 @@ trusted-users = root <your-local-username>
 
 Add that to your local `/etc/nix/nix.conf` if needed, then restart the local Nix daemon using the method for your platform.
 
-Optional SSH config example:
+Optional dedicated builder alias example:
 
 ```sshconfig
 Host semesta-builder
