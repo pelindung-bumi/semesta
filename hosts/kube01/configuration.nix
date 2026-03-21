@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
   imports = [
     ../../modules/nixos/common.nix
@@ -9,6 +9,19 @@
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
   networking.hostName = "kube01";
+
+  boot.kernelModules = [
+    "libceph"
+    "rbd"
+    "nbd"
+  ];
+
+  system.activationScripts.exposeKernelModules.text = ''
+    mkdir -p /lib/modules
+    ln -sfn \
+      "/run/current-system/kernel-modules/lib/modules/${config.boot.kernelPackages.kernel.modDirVersion}" \
+      "/lib/modules/${config.boot.kernelPackages.kernel.modDirVersion}"
+  '';
 
   boot.loader.efi.canTouchEfiVariables = false;
   boot.loader.efi.efiSysMountPoint = "/boot/efi";
