@@ -68,6 +68,8 @@ in
     home = "/var/lib/cachepush";
     createHome = true;
     hashedPassword = "!";
-    openssh.authorizedKeys.keys = [ ];
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEwZR6tOVpk8gFghgelwcN3NztoZTFujd5ISYxama2q9"
+    ];
   };
 }

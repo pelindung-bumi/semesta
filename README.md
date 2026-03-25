@@ -312,20 +312,21 @@ Add the cache manually on the laptop after you read the public key:
 
 ### GitHub Actions Upload Flow
 
-The cache server is public over HTTPS, but build uploads should go straight to `lb01` over SSH into its Nix store.
+The cache server is public over HTTPS, but build uploads should go straight to `lb01` over private NetBird SSH into its Nix store.
 
 Example flow:
 
 ```bash
 nix build .#some-output
-nix copy --to ssh-ng://cachepush@103.125.102.156 ./result
+nix copy --to ssh-ng://cachepush@10.200.1.93 ./result
 ```
 
 Notes:
 
+- GitHub Actions should join NetBird first using the repository secret `NETBIRD_SETUP_KEY`
 - add the GitHub Actions SSH public key to `users.users.cachepush.openssh.authorizedKeys.keys` before using CI uploads
 - `cachepush` is trusted by the Nix daemon on `lb01`, but it is not a sudo user
-- using the public IP for SSH avoids issues if the `nixtip` DNS record is ever proxied through Cloudflare
+- SSH uploads should stay on the private NetBird address `10.200.1.93`; only cache downloads use the public HTTPS endpoint
 
 ## First Install
 
