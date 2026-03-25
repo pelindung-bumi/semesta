@@ -7,7 +7,7 @@ This repository is meant to manage multiple machines and services over time.
 Today it contains these host roles:
 
 - `vpn` for self-hosted NetBird
-- `lb01` for a simple Kubernetes API load balancer
+- `lb01` for nginx edge routing, Harmonia, and Kubernetes API proxying
 - `kube01` for a minimal single-node k3s cluster
 
 Pinned service versions in the current setup:
@@ -15,6 +15,7 @@ Pinned service versions in the current setup:
 - NetBird server image: `0.66.4`
 - NetBird dashboard image: `v2.34.2`
 - K3s binary: `v1.35.1+k3s1`
+- Harmonia cache: `v3.0.0` via upstream flake input
 
 It currently uses:
 
@@ -40,6 +41,7 @@ semesta/
     ├── lb01/
     │   ├── configuration.nix
     │   ├── disko.nix
+    │   ├── harmonia.nix
     │   ├── hardware-configuration.nix
     │   └── nginx-lb.nix
     ├── kube01/
@@ -113,7 +115,7 @@ Current planned hosts:
 
 ```text
 vpn    -> NetBird control plane + peer/router
-lb01   -> nginx TCP proxy for kube API
+lb01   -> nginx edge routing + Harmonia + kube API TCP proxy
 kube01 -> single-node k3s server
 ```
 
@@ -228,6 +230,102 @@ nix build .#nixosConfigurations.kube01.config.system.build.toplevel \
 ```
 
 `--max-jobs 0` forces the build off the local machine so it is easier to confirm the builder path is working.
+
+## Harmonia Cache on `lb01`
+
+`lb01` also exposes a public Harmonia cache at:
+
+```text
+https://nixtip.pelindungbumi.dev
+```
+
+Current edge routing on `lb01` is:
+
+```text
+80/tcp  -> nixtip.pelindungbumi.dev -> local Harmonia
+80/tcp  -> any other Host          -> kube01:30080
+443/tcp -> SNI nixtip...           -> local Harmonia TLS vhost
+443/tcp -> any other SNI/default   -> kube01:30443
+6443    -> kube01:6443
+```
+
+Notes:
+
+- keep the Cloudflare `A` record for `nixtip.pelindungbumi.dev` pointed at `103.125.102.156`
+- keep that DNS record DNS-only so ACME `http-01` renewal and SSH uploads stay simple
+- Harmonia runs on loopback on `lb01`; public TLS terminates at NixOS `nginx`
+- cache uploads are intended to use the dedicated SSH user `cachepush`
+
+### Deploy and Verify
+
+Build the `lb01` system locally first:
+
+```bash
+nix build .#nixosConfigurations.lb01.config.system.build.toplevel
+```
+
+Then deploy with Colmena:
+
+```bash
+nix run github:zhaofengli/colmena -- apply --build-on-target --on lb01
+```
+
+Verify the public cache endpoint:
+
+```bash
+curl -fsSL https://nixtip.pelindungbumi.dev/nix-cache-info
+```
+
+Verify the services on `lb01`:
+
+```bash
+ssh semesta-lb01 'sudo systemctl status nginx harmonia-dev harmonia-signing-key --no-pager'
+```
+
+### Public Cache Key
+
+The Harmonia signing keypair is created automatically on first deploy and stored only on `lb01`:
+
+```text
+secret: /var/lib/secrets/harmonia/nixtip.pelindungbumi.dev-1.secret
+public: /var/lib/secrets/harmonia/nixtip.pelindungbumi.dev-1.pub
+```
+
+Read the public key after the first deployment:
+
+```bash
+ssh semesta-lb01 'sudo cat /var/lib/secrets/harmonia/nixtip.pelindungbumi.dev-1.pub'
+```
+
+### Laptop Client Example
+
+Add the cache manually on the laptop after you read the public key:
+
+```nix
+{
+  nix.settings = {
+    substituters = [ "https://nixtip.pelindungbumi.dev" ];
+    trusted-public-keys = [ "nixtip.pelindungbumi.dev-1:<PASTE_PUBLIC_KEY_HERE>" ];
+  };
+}
+```
+
+### GitHub Actions Upload Flow
+
+The cache server is public over HTTPS, but build uploads should go straight to `lb01` over SSH into its Nix store.
+
+Example flow:
+
+```bash
+nix build .#some-output
+nix copy --to ssh-ng://cachepush@103.125.102.156 ./result
+```
+
+Notes:
+
+- add the GitHub Actions SSH public key to `users.users.cachepush.openssh.authorizedKeys.keys` before using CI uploads
+- `cachepush` is trusted by the Nix daemon on `lb01`, but it is not a sudo user
+- using the public IP for SSH avoids issues if the `nixtip` DNS record is ever proxied through Cloudflare
 
 ## First Install
 
@@ -427,7 +525,12 @@ If a peer can ping `vpn.netbird.selfhosted` but cannot reach `10.200.x.x`:
 
 ### Service Example: kube API through `lb01`
 
-`lb01` is intentionally simple. It only proxies Kubernetes API TCP traffic:
+`lb01` now has two edge roles:
+
+- public HTTP/S routing for `nixtip.pelindungbumi.dev` and kube ingress traffic
+- Kubernetes API TCP proxying on `6443`
+
+The Kubernetes API path is still:
 
 ```text
 client -> lb01:6443 -> kube01:6443
@@ -453,6 +556,16 @@ If kube API is unreachable through `lb01`, check:
 - `services.nginx` is active on `lb01`
 - `services.k3s` is active on `kube01`
 - firewall allows `6443/tcp` on both hosts
+
+### Service Example: Harmonia on `lb01`
+
+If `https://nixtip.pelindungbumi.dev` is unreachable or does not serve cache metadata, check:
+
+- the `A` record for `nixtip.pelindungbumi.dev` still points to `103.125.102.156`
+- the record remains DNS-only so ACME `http-01` can renew
+- `services.nginx` and `harmonia-dev` are active on `lb01`
+- `curl -fsSL https://nixtip.pelindungbumi.dev/nix-cache-info` returns metadata
+- `sudo cat /var/lib/secrets/harmonia/nixtip.pelindungbumi.dev-1.pub` returns the public key you installed on the laptop
 
 ### Service Example: `kube01` storage layout
 

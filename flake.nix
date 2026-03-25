@@ -13,15 +13,22 @@
       url = "github:zhaofengli/colmena";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    harmonia = {
+      url = "github:nix-community/harmonia";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs @ {
-    self,
-    nixpkgs,
-    disko,
-    colmena,
-    ...
-  }:
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      disko,
+      colmena,
+      harmonia,
+      ...
+    }:
     let
       lib = nixpkgs.lib;
       supportedSystems = [
@@ -31,7 +38,8 @@
       ];
       forAllSystems = lib.genAttrs supportedSystems;
 
-      mkPkgs = system:
+      mkPkgs =
+        system:
         import nixpkgs {
           inherit system;
           config.allowUnfree = true;
@@ -42,14 +50,22 @@
           system = "x86_64-linux";
           modules = [
             disko.nixosModules.disko
+            harmonia.nixosModules.harmonia
             ./hosts/lb01/configuration.nix
           ];
           deployment = {
             targetHost = "semesta-lb01";
             targetPort = 22;
             targetUser = "batman";
-            privilegeEscalationCommand = [ "sudo" "-H" "--" ];
-            tags = [ "lb01" "loadbalancer" ];
+            privilegeEscalationCommand = [
+              "sudo"
+              "-H"
+              "--"
+            ];
+            tags = [
+              "lb01"
+              "loadbalancer"
+            ];
           };
         };
 
@@ -63,8 +79,15 @@
             targetHost = "semesta-kube01";
             targetPort = 22;
             targetUser = "batman";
-            privilegeEscalationCommand = [ "sudo" "-H" "--" ];
-            tags = [ "kube01" "k3s" ];
+            privilegeEscalationCommand = [
+              "sudo"
+              "-H"
+              "--"
+            ];
+            tags = [
+              "kube01"
+              "k3s"
+            ];
           };
         };
 
@@ -78,7 +101,11 @@
             targetHost = "semesta-vpn";
             targetPort = 22222;
             targetUser = "batman";
-            privilegeEscalationCommand = [ "sudo" "-H" "--" ];
+            privilegeEscalationCommand = [
+              "sudo"
+              "-H"
+              "--"
+            ];
             tags = [ "vpn" ];
           };
         };
@@ -125,15 +152,12 @@
           machinesFile = ./colmena/machines;
         };
       }
-      // lib.mapAttrs (
-        _name: host:
-        {
-          imports = host.modules;
-          deployment = host.deployment // {
-            allowLocalDeployment = true;
-          };
-        }
-      ) hosts;
+      // lib.mapAttrs (_name: host: {
+        imports = host.modules;
+        deployment = host.deployment // {
+          allowLocalDeployment = true;
+        };
+      }) hosts;
 
       colmenaHive = colmena.lib.makeHive self.outputs.colmena;
 
