@@ -6,8 +6,10 @@
     ../../modules/nixos/managed-ssh.nix
     ../../modules/nixos/remote-builder.nix
     ./disko.nix
+    ./harmonia.nix
     ./nginx-lb.nix
-  ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
+  ]
+  ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
   networking.hostName = "lb01";
 
