@@ -454,6 +454,21 @@ If kube API is unreachable through `lb01`, check:
 - `services.k3s` is active on `kube01`
 - firewall allows `6443/tcp` on both hosts
 
+### Kubernetes Networking on `kube01`
+
+`kube01` is prepared for a kube-proxy-free Cilium deployment:
+
+- k3s runs with `--flannel-backend=none`
+- k3s runs with `--disable-network-policy`
+- k3s disables the packaged `kube-proxy`
+
+After switching away from the built-in k3s network policy controller, clean up any leftover kube-router rules on `kube01` with:
+
+```bash
+sudo iptables-save | grep -v KUBE-ROUTER | sudo iptables-restore
+sudo ip6tables-save | grep -v KUBE-ROUTER | sudo ip6tables-restore
+```
+
 ### Service Example: `kube01` storage layout
 
 `kube01` intentionally leaves the extra disk raw for future Rook/Ceph use:
@@ -477,7 +492,6 @@ Use this checklist:
 - add final SSH aliases for all managed hosts in local `~/.ssh/config`
 - optionally update `flake.nix` deployment targets to use SSH aliases for `lb01` and `kube01`
 - document the final kubeconfig distribution workflow for `kubeapi.pelindungbumi.dev:6443`
-- evaluate future migration from flannel to Cilium on `kube01`
 - reserve future Ceph/Rook plan for the extra raw disk on a future storage-capable Kubernetes host
 
 ## Design Rules
