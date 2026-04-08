@@ -102,7 +102,7 @@
               pkgs.nixos-anywhere
               pkgs.openssh
             ]
-            ++ lib.optionals (builtins.hasAttr system colmena.packages) [ colmena.packages.${system}.default ]
+            ++ lib.optionals (builtins.hasAttr system colmena.packages && builtins.hasAttr "default" colmena.packages.${system}) [ colmena.packages.${system}.default ]
             ++ lib.optionals (pkgs ? colmena) [ pkgs.colmena ];
           };
         }
