@@ -35,6 +35,7 @@
         import nixpkgs {
           inherit system;
           config.allowUnfree = true;
+          overlays = [ colmena.overlays.default ];
         };
 
       hosts = {
