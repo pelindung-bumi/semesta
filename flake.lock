@@ -104,11 +104,11 @@
       },
       "locked": {
         "dir": "outputs/pi",
-        "lastModified": 1792033948,
-        "narHash": "sha256-uRdX/PZ/L175A+CERxtYuix7Oi7OpYCIiIVOS6ZCBEY=",
+        "lastModified": 1792035224,
+        "narHash": "sha256-bi0f6WfgLx+sY4Or+m5cwUiAhJr25Jlcb76ReiWjzOg=",
         "owner": "valdo766hi",
         "repo": "nix-config",
-        "rev": "ec523cbbba7813244b73580cc6ca44cc82b73d4e",
+        "rev": "e2895a71069a9a824d7bc6264f31ea0d9beb686f",
         "type": "github"
       },
       "original": {
