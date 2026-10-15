@@ -22,7 +22,7 @@ It currently uses:
 - `colmena` for day-2 deploys
 - `disko` for disk layout
 - self-hosted NetBird on `vpn`
-- the portable `pi` coding agent on every host, from `github:valdo766hi/nix-config?dir=outputs/pi`
+- the portable `pi` coding agent and `herdr` on every host, from `github:valdo766hi/nix-config?dir=outputs/pi`
 
 ## Layout
 
@@ -319,7 +319,7 @@ Server-side fallback deploy:
 sudo nixos-rebuild switch --flake .#<host>
 ```
 
-Update the `pi` coding agent after pushing nix-config:
+Update `pi` and `herdr` after pushing nix-config:
 
 ```bash
 nix flake update nix-config

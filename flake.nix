@@ -41,8 +41,11 @@
           overlays = [ colmena.overlays.default ];
         };
 
-      piModule = { pkgs, ... }: {
-        environment.systemPackages = [ nix-config.packages.${pkgs.stdenv.hostPlatform.system}.pi ];
+      agentToolsModule = { pkgs, ... }: {
+        environment.systemPackages = with nix-config.packages.${pkgs.stdenv.hostPlatform.system}; [
+          pi
+          herdr
+        ];
       };
 
       hosts = {
@@ -50,7 +53,7 @@
           system = "x86_64-linux";
           modules = [
             disko.nixosModules.disko
-            piModule
+            agentToolsModule
             ./hosts/lb01/configuration.nix
           ];
           deployment = {
@@ -66,7 +69,7 @@
           system = "x86_64-linux";
           modules = [
             disko.nixosModules.disko
-            piModule
+            agentToolsModule
             ./hosts/kube01/configuration.nix
           ];
           deployment = {
@@ -82,7 +85,7 @@
           system = "x86_64-linux";
           modules = [
             disko.nixosModules.disko
-            piModule
+            agentToolsModule
             ./hosts/vpn/configuration.nix
           ];
           deployment = {
