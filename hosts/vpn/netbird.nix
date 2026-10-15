@@ -10,4 +10,6 @@
     domain = "netbird.pelindungbumi.dev";
     localPeer.enable = true;
   };
+
+  services.tailscale.extraSetFlags = [ "--netfilter-mode=nodivert" ];
 }

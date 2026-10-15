@@ -3,6 +3,7 @@
   imports = [
     ../../modules/nixos/common.nix
     ../../modules/nixos/cloud-host.nix
+    ../../modules/nixos/tailscale.nix
     ./disko.nix
     ./netbird.nix
     ./openssh-vpn.nix

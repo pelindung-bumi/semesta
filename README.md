@@ -327,6 +327,15 @@ nix flake update nix-config
 
 `pi` keeps its login and sessions in `~/.pi/nix-config/agent` on each host; run `/login` on first use.
 
+Join a host to Tailscale (auth is manual; `login` keeps the declared `tailscale set` preferences):
+
+```bash
+sudo tailscale login
+tailscale status
+```
+
+Tailscale never manages host DNS (`--accept-dns=false`), and `vpn` uses `--netfilter-mode=nodivert` so Tailscale firewall rules cannot drop NetBird traffic, which shares the `100.64.0.0/10` range.
+
 ## Current Service Example: NetBird on `vpn`
 
 NetBird here has two roles on `vpn`:
