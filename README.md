@@ -22,6 +22,7 @@ It currently uses:
 - `colmena` for day-2 deploys
 - `disko` for disk layout
 - self-hosted NetBird on `vpn`
+- the portable `pi` coding agent on every host, from `github:valdo766hi/nix-config?dir=outputs/pi`
 
 ## Layout
 
@@ -317,6 +318,14 @@ Server-side fallback deploy:
 ```bash
 sudo nixos-rebuild switch --flake .#<host>
 ```
+
+Update the `pi` coding agent after pushing nix-config:
+
+```bash
+nix flake update nix-config
+```
+
+`pi` keeps its login and sessions in `~/.pi/nix-config/agent` on each host; run `/login` on first use.
 
 ## Current Service Example: NetBird on `vpn`
 

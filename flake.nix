@@ -13,6 +13,8 @@
       url = "github:zhaofengli/colmena";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-config.url = "github:valdo766hi/nix-config?dir=outputs/pi";
   };
 
   outputs = inputs @ {
@@ -20,6 +22,7 @@
     nixpkgs,
     disko,
     colmena,
+    nix-config,
     ...
   }:
     let
@@ -38,11 +41,16 @@
           overlays = [ colmena.overlays.default ];
         };
 
+      piModule = { pkgs, ... }: {
+        environment.systemPackages = [ nix-config.packages.${pkgs.stdenv.hostPlatform.system}.pi ];
+      };
+
       hosts = {
         lb01 = {
           system = "x86_64-linux";
           modules = [
             disko.nixosModules.disko
+            piModule
             ./hosts/lb01/configuration.nix
           ];
           deployment = {
@@ -58,6 +66,7 @@
           system = "x86_64-linux";
           modules = [
             disko.nixosModules.disko
+            piModule
             ./hosts/kube01/configuration.nix
           ];
           deployment = {
@@ -73,6 +82,7 @@
           system = "x86_64-linux";
           modules = [
             disko.nixosModules.disko
+            piModule
             ./hosts/vpn/configuration.nix
           ];
           deployment = {
