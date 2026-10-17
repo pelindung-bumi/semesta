@@ -2,7 +2,7 @@
   description = "Semesta infrastructure managed declaratively with Nix";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     disko = {
       url = "github:nix-community/disko";
@@ -99,7 +99,7 @@
       };
     in
     {
-      formatter = forAllSystems (system: (mkPkgs system).nixfmt-rfc-style);
+      formatter = forAllSystems (system: (mkPkgs system).nixfmt);
 
       devShells = forAllSystems (
         system:
@@ -111,7 +111,7 @@
             packages = [
               pkgs.git
               pkgs.just
-              pkgs.nixfmt-rfc-style
+              pkgs.nixfmt
               pkgs.nil
               pkgs.nixos-anywhere
               pkgs.openssh

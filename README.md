@@ -10,11 +10,20 @@ Today it contains these host roles:
 - `lb01` for a simple Kubernetes API load balancer
 - `kube01` for a minimal single-node k3s cluster
 
+All three hosts target stable NixOS 26.05; `system.stateVersion` stays at `25.11`.
+
 Pinned service versions in the current setup:
 
 - NetBird server image: `0.66.4`
 - NetBird dashboard image: `v2.34.2`
 - K3s binary: `v1.35.1+k3s1`
+- Kubernetes-managed Redpanda: `v26.1.5`, pinned in its StatefulSet to
+  `docker.redpanda.com/redpandadata/redpanda@sha256:f9d86102b8030b5a990a09e30ee3f7f3b8c8c677ee3eca921555d882becdeae7`.
+
+The Redpanda manifests and Community Edition settings are declared in `galaksi`
+under `overlays/pelindung-bumi/prod/redpanda`; they are not managed by NixOS.
+Keep that overlay pinned to the verified digest, not `latest`, to avoid unplanned
+broker upgrades on node restarts.
 
 It currently uses:
 
@@ -272,7 +281,20 @@ nix run nixpkgs#nixos-anywhere -- \
 
 ## Day-2 Deployment
 
-Preferred:
+For the initial 25.11 → 26.05 upgrade, have backups and console access available.
+26.05 changes the initrd and D-Bus defaults, so stage for boot and reboot rather
+than switching live. Start with VPN only, using the pinned Colmena:
+
+```bash
+nix run --inputs-from . colmena#colmena -- \
+  apply boot --on vpn --build-on-target --reboot
+```
+
+Verify SSH, a recent NetBird WireGuard handshake, and client access to
+`10.200.0.177` before continuing with `lb01`, then `kube01`. Check the load-balanced
+API and Kubernetes/Ceph health after each reboot.
+
+For routine deployments, preferred:
 
 ```bash
 nix run github:zhaofengli/colmena -- apply --on <host>
@@ -474,10 +496,11 @@ If kube API is unreachable through `lb01`, check:
 
 ### Service Example: `kube01` storage layout
 
-`kube01` intentionally leaves the extra disk raw for future Rook/Ceph use:
+`disko` manages only the operating system disk. The extra disk is already used by
+Rook/Ceph and must not be reformatted during an OS upgrade:
 
 - `vda` = operating system disk managed by `disko`
-- `vdb` = untouched raw disk reserved for future Ceph
+- `vdb` = existing Ceph BlueStore data; preserve its contents
 
 ## Adding Another Host
 
